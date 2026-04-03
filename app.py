@@ -606,11 +606,11 @@ def export_monthly_pdf():
 
 
 # ==============================
-# GENERATION QR
+# GENERATION QR WEB CLIQUABLE
 # ==============================
 @app.route("/generate_qr")
 def generate_qr():
-    qr_url = request.host_url + "patient/form"
+    qr_url = url_for("patient_claim_form", _external=True)
 
     img = qrcode.make(qr_url)
 
