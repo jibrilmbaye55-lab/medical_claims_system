@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+.archive-card {
+    border-radius: 18px;
+    transition: all 0.3s ease;
+}
+
+.archive-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+}
+
+.archive-row {
+    transition: all 0.25s ease;
+}
+
+.archive-row:hover {
+    background: rgba(108,117,125,0.05);
+}
+</style>
+
+<div class="main-card p-4 p-md-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ url_for('static', filename='assets/logo_labo.png') }}"
+                 style="height:64px; width:auto;">
+            <div>
+                <h1 class="fw-bold mb-1">📦 Archives Réclamations</h1>
+                <p class="text-muted mb-0">
+                    Historique des réclamations traitées et clôturées
+                </p>
+            </div>
+        </div>
+
+        <a href="/claims" class="btn btn-modern text-white">
+            🔙 Retour Dashboard
+        </a>
+    </div>
+
+    <!-- KPI -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 archive-card h-100">
+                <h6 class="text-muted mb-2">📦 Total archives</h6>
+                <h2 class="fw-bold mb-0">{{ claims|length }}</h2>
+                <small class="text-muted">Tickets archivés</small>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 archive-card h-100">
+                <h6 class="text-muted mb-2">🚨 Critiques</h6>
+                <h2 class="fw-bold text-danger mb-0">
+                    {{ claims | selectattr('priority', 'equalto', 'Critique') | list | length }}
+                </h2>
+                <small class="text-muted">Cas sensibles</small>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 archive-card h-100">
+                <h6 class="text-muted mb-2">✅ Résolues</h6>
+                <h2 class="fw-bold text-success mb-0">{{ claims|length }}</h2>
+                <small class="text-muted">Clôturées</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-responsive">
+        <table class="table align-middle table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Ticket</th>
+                    <th>Patient</th>
+                    <th>Téléphone</th>
+                    <th>Service</th>
+                    <th>Priorité</th>
+                    <th>Objet</th>
+                    <th>Résolu le</th>
+                    <th>Statut</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for c in claims %}
+                <tr class="archive-row">
+                    <td>
+                        <strong class="text-secondary">{{ c.ticket_number }}</strong>
+                    </td>
+
+                    <td>
+                        <div class="fw-semibold">{{ c.patient_name }}</div>
+                        <small class="text-muted">{{ c.category }}</small>
+                    </td>
+
+                    <td>{{ c.phone }}</td>
+
+                    <td>
+                        <span class="badge bg-info-subtle text-dark border px-3 py-2">
+                            {{ c.service }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {% if c.priority == 'Critique' %}
+                            <span class="badge bg-danger px-3 py-2">
+                                🚨 {{ c.priority }}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary px-3 py-2">
+                                {{ c.priority }}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td class="fw-semibold">{{ c.subject }}</td>
+
+                    <td>
+                        {% if c.resolved_at %}
+                            {{ c.resolved_at.strftime('%d/%m/%Y %H:%M') }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <span class="badge bg-success px-3 py-2">
+                            ✅ Archivée
+                        </span>
+                    </td>
+
+                    <td>
+                        <a href="/claim/{{ c.id }}/restore"
+                           class="btn btn-warning btn-sm rounded-pill px-3">
+                            ♻️ Restaurer
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% if not claims %}
+                <tr>
+                    <td colspan="9" class="text-center py-5 text-muted">
+                        📭 Aucune archive disponible
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

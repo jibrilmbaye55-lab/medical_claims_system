@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="main-card p-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1">📊 Tableau de bord</h2>
+            <p class="text-muted mb-0">
+                Vue globale des réclamations médicales • COUD Laboratoire
+            </p>
+        </div>
+
+        <div class="d-flex gap-3 flex-wrap">
+            <a href="/claim/new" class="btn btn-modern">
+                ➕ Nouvelle réclamation
+            </a>
+            <a href="/claims" class="btn btn-dark rounded-4 px-4">
+                📋 Voir toutes
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="row g-4">
+
+        <div class="col-md-4">
+            <div class="card border-0 main-card kpi-card p-4 text-center h-100">
+                <div class="fs-1 mb-3">📁</div>
+                <h6 class="text-muted">Total Réclamations</h6>
+                <h2 class="fw-bold text-primary">{{ total }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 main-card kpi-card p-4 text-center h-100">
+                <div class="fs-1 mb-3">⏳</div>
+                <h6 class="text-muted">En attente</h6>
+                <h2 class="fw-bold text-warning">{{ pending }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 main-card kpi-card p-4 text-center h-100">
+                <div class="fs-1 mb-3">✅</div>
+                <h6 class="text-muted">Réclamations résolues</h6>
+                <h2 class="fw-bold text-success">{{ solved }}</h2>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- INFO SECTION -->
+    <div class="mt-5 p-4 rounded-4"
+         style="background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(14,165,233,.08));">
+        <h5 class="fw-bold mb-3">🏥 Suivi institutionnel</h5>
+        <p class="mb-0 text-muted">
+            Ce tableau de bord permet au département médical du COUD
+            de suivre en temps réel les réclamations des étudiants,
+            l’état de traitement et le niveau de résolution du laboratoire.
+        </p>
+    </div>
+
+</div>
+
+{% endblock %}

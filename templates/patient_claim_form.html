@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<style>
+/* ===== PAGE ===== */
+body {
+    overflow-x: hidden;
+    padding-top: 100px;
+}
+
+/* ===== HEADER OFFICIEL ===== */
+.official-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+    background: linear-gradient(90deg, #0d6efd, #0aa2e3);
+    box-shadow: 0 8px 24px rgba(13,110,253,0.18);
+    z-index: 1050;
+}
+
+.ecg-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent 0 18px,
+        rgba(255,255,255,0.95) 18px 24px,
+        transparent 24px 36px,
+        rgba(255,255,255,0.95) 36px 42px,
+        transparent 42px 70px
+    );
+    animation: ecgMove 2.5s linear infinite;
+}
+
+@keyframes ecgMove {
+    from { transform: translateX(-90px); }
+    to { transform: translateX(90px); }
+}
+
+.header-title {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.header-subtitle {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.9rem;
+}
+
+.header-date {
+    color: white;
+    font-weight: 600;
+    background: rgba(255,255,255,0.12);
+    padding: 10px 16px;
+    border-radius: 999px;
+}
+
+.qr-pulse-icon {
+    font-size: 1.8rem;
+    animation: pulseQR 1.8s infinite;
+}
+
+@keyframes pulseQR {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+}
+
+/* ===== FOND ANIMÉ ===== */
+.animated-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background: linear-gradient(135deg, #eef5ff 0%, #dfefff 45%, #f8fcff 100%);
+}
+
+.bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(13,110,253,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(13,110,253,0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridMove 18s linear infinite;
+}
+
+.bg-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(40px);
+    opacity: 0.65;
+    animation: drift 14s infinite ease-in-out;
+}
+
+.bg-orb.one {
+    width: 340px;
+    height: 340px;
+    top: 5%;
+    left: 3%;
+    background: #0d6efd;
+}
+
+.bg-orb.two {
+    width: 420px;
+    height: 420px;
+    top: 55%;
+    right: 5%;
+    background: #6f42c1;
+    animation-duration: 18s;
+}
+
+.bg-orb.three {
+    width: 280px;
+    height: 280px;
+    bottom: 5%;
+    left: 35%;
+    background: #20c997;
+    animation-duration: 12s;
+}
+
+@keyframes drift {
+    0%,100% { transform: translate(0,0) scale(1); }
+    25% { transform: translate(40px,-30px) scale(1.08); }
+    50% { transform: translate(-20px,25px) scale(0.95); }
+    75% { transform: translate(25px,10px) scale(1.03); }
+}
+
+@keyframes gridMove {
+    from { transform: translateY(0); }
+    to { transform: translateY(40px); }
+}
+
+/* ===== CARTE ===== */
+.main-card {
+    position: relative;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(14px);
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+    border: 1px solid rgba(255,255,255,0.7);
+}
+
+/* ===== LOGOS ===== */
+.brand-logos {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: rgba(255,255,255,0.75);
+    padding: 12px 18px;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+.logo-coud {
+    height: 64px;
+    width: auto;
+    object-fit: contain;
+}
+
+.logo-labo {
+    height: 52px;
+    width: auto;
+    object-fit: contain;
+}
+
+.logo-divider {
+    width: 1px;
+    height: 42px;
+    background: rgba(0,0,0,0.08);
+}
+
+/* ===== FORM ===== */
+.form-control,
+.form-select {
+    border-radius: 14px;
+    padding: 14px;
+    border: 1px solid #dfe7f1;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(13,110,253,0.15);
+}
+
+/* ===== BUTTON ===== */
+.btn-modern {
+    background: linear-gradient(90deg, #0d6efd, #6f42c1);
+    border: none;
+    border-radius: 50px;
+    padding: 14px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-modern:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 25px rgba(13,110,253,0.25);
+}
+
+/* ===== TOAST ===== */
+.success-toast {
+    display: none;
+    position: fixed;
+    top: 115px;
+    right: 20px;
+    z-index: 2000;
+    background: white;
+    border-left: 5px solid #0d6efd;
+    padding: 16px 20px;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    font-weight: 600;
+}
+</style>
+
+<!-- ===== HEADER ===== -->
+<div class="official-header">
+    <div class="container-fluid d-flex justify-content-between align-items-center px-4 py-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="qr-pulse-icon">📋</div>
+            <div>
+                <div class="header-title">COUD Medical Reclamations</div>
+                <div class="header-subtitle">
+                    Centre médical • Laboratoire • Réclamations intelligentes
+                </div>
+            </div>
+        </div>
+        <div class="header-date" id="liveDate"></div>
+    </div>
+    <div class="ecg-line"></div>
+</div>
+
+<!-- ===== FOND ANIMÉ ===== -->
+<div class="animated-bg">
+    <div class="bg-grid"></div>
+    <div class="bg-orb one"></div>
+    <div class="bg-orb two"></div>
+    <div class="bg-orb three"></div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="successToast" class="success-toast">
+    ✅ Réclamation prête à être envoyée
+</div>
+
+<!-- ===== FORMULAIRE ===== -->
+<div class="main-card p-5 mx-auto" style="max-width: 1100px;">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-4">
+        <div class="brand-logos">
+            <img src="{{ url_for('static', filename='assets/logo_coud.png') }}" alt="Logo COUD" class="logo-coud">
+            <div class="logo-divider"></div>
+            <img src="{{ url_for('static', filename='assets/logo_labo.png') }}" alt="Logo Laboratoire" class="logo-labo">
+        </div>
+
+        <div class="text-end">
+            <span class="badge bg-primary fs-6 px-4 py-3 rounded-pill shadow-sm">
+                QR Access Enabled
+            </span>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <h1 class="fw-bold mb-2">Formulaire de Réclamation Patient</h1>
+        <p class="text-muted mb-0">
+            Soumettez votre réclamation en quelques secondes après le scan du QR code.
+        </p>
+    </div>
+
+    <form method="POST" class="row g-4" id="claimForm">
+        <div class="col-md-6">
+            <label class="fw-semibold mb-2">Nom complet</label>
+            <input name="patient_name" class="form-control" placeholder="Ex: Djibril Mbaye" required>
+        </div>
+
+        <div class="col-md-6">
+            <label class="fw-semibold mb-2">Catégorie</label>
+            <select name="category" class="form-select" required>
+                <option>Etudiant</option>
+                <option>Personnel COUD</option>
+                <option>Externe</option>
+            </select>
+        </div>
+
+        <div class="col-md-6">
+            <label class="fw-semibold mb-2">Téléphone</label>
+            <input name="phone" type="tel" class="form-control" placeholder="Ex: 77 123 45 67" required>
+            <small class="text-muted">
+                Ce numéro permettra au service médical de vous contacter rapidement.
+            </small>
+        </div>
+
+        <div class="col-md-6">
+            <label class="fw-semibold mb-2">Service concerné</label>
+            <input name="subject" class="form-control" placeholder="Ex: Laboratoire" required>
+        </div>
+
+        <div class="col-12">
+            <label class="fw-semibold mb-2">Description détaillée</label>
+            <textarea name="description" class="form-control" rows="6" placeholder="Décrivez votre problème ici..." required></textarea>
+        </div>
+
+        <div class="col-12 d-grid">
+            <button class="btn btn-modern text-white btn-lg">
+                🚀 Soumettre la réclamation
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+setInterval(() => {
+    const el = document.getElementById("liveDate");
+    if (el) {
+        el.textContent = new Date().toLocaleString("fr-FR");
+    }
+}, 1000);
+
+document.getElementById("claimForm")?.addEventListener("submit", function () {
+    const toast = document.getElementById("successToast");
+    if (toast) {
+        toast.style.display = "block";
+        setTimeout(() => {
+            toast.style.display = "none";
+        }, 3000);
+    }
+});
+</script>
+
+{% endblock %}

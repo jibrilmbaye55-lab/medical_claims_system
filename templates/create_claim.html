@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<form method="POST" class="card p-4">
+    <h3>Nouvelle réclamation</h3>
+    <input name="patient_name" class="form-control my-2" placeholder="Nom du patient">
+    <select name="category" class="form-control my-2">
+        <option>Etudiant</option>
+        <option>Personnel COUD</option>
+        <option>Externe</option>
+    </select>
+    <input name="phone" class="form-control my-2" placeholder="Téléphone">
+    <input name="subject" class="form-control my-2" placeholder="Objet">
+    <textarea name="description" class="form-control my-2" placeholder="Description"></textarea>
+    <button class="btn btn-success">Enregistrer</button>
+</form>
+{% endblock %}

@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1">📊 Dashboard Administrateur - Temps Réel</h2>
+            <p class="text-muted mb-0">
+                Suivi intelligent des réclamations COUD • Département médical
+            </p>
+        </div>
+        <span class="badge bg-success fs-6 px-3 py-2 shadow-sm">
+            🔄 Mise à jour auto: 5s
+        </span>
+    </div>
+
+    <!-- KPI GLOBAL -->
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="main-card kpi-card p-4 text-center border-start border-primary border-4">
+                <h6 class="text-muted">Total</h6>
+                <h2 class="fw-bold text-primary" id="totalCount">{{ total }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="main-card kpi-card p-4 text-center border-start border-warning border-4">
+                <h6 class="text-muted">En attente</h6>
+                <h2 class="fw-bold text-warning" id="pendingCount">{{ pending }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="main-card kpi-card p-4 text-center border-start border-success border-4">
+                <h6 class="text-muted">Résolues</h6>
+                <h2 class="fw-bold text-success" id="solvedCount">{{ solved }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="main-card kpi-card p-4 text-center border-start border-danger border-4">
+                <h6 class="text-muted">Urgentes</h6>
+                <h2 class="fw-bold text-danger" id="urgentCount">{{ urgent|default(0) }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="row mt-4 g-4">
+        <div class="col-md-4">
+            <div class="main-card kpi-card p-4">
+                🎓 <strong>Étudiants :</strong> {{ students }}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="main-card kpi-card p-4">
+                👨‍💼 <strong>Personnel COUD :</strong> {{ staff }}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="main-card kpi-card p-4">
+                🌍 <strong>Externes :</strong> {{ external }}
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="mt-4 d-flex gap-3 flex-wrap">
+        <a href="/generate_qr" class="btn btn-modern">
+            📱 Télécharger QR Code Patient
+        </a>
+
+        <a href="/claims" class="btn btn-modern">
+            📋 Réclamations en direct
+        </a>
+
+        <a href="/export_pdf" class="btn btn-modern">
+            📄 Export PDF Global
+        </a>
+
+        <a href="/admin/export" class="btn btn-modern">
+            🖨️ Rapport Direction Premium
+        </a>
+    </div>
+
+    <!-- SERVICES -->
+    <div class="row mt-4 g-4">
+        <div class="col-md-3">
+            <div class="main-card kpi-card p-4 text-center">🩺 Consultation</div>
+        </div>
+        <div class="col-md-3">
+            <div class="main-card kpi-card p-4 text-center">💊 Pharmacie</div>
+        </div>
+        <div class="col-md-3">
+            <div class="main-card kpi-card p-4 text-center">🧪 Laboratoire</div>
+        </div>
+        <div class="col-md-3">
+            <div class="main-card kpi-card p-4 text-center">🚑 Urgence</div>
+        </div>
+    </div>
+
+    <!-- CHART -->
+    <div class="main-card mt-4 p-4">
+        <h5 class="fw-bold mb-3">📈 Statistiques journalières</h5>
+        <canvas id="claimsChart" height="100"></canvas>
+    </div>
+
+    <!-- RAPPORT PAR MOIS -->
+    <div class="main-card mt-4 p-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <h5 class="fw-bold mb-0">📅 Rapport de chaque mensualité</h5>
+
+            <form method="GET" class="d-flex gap-2 flex-wrap align-items-center">
+                <select name="month" class="form-select" style="min-width:220px;" onchange="this.form.submit()">
+                    <option value="">-- Choisir un mois --</option>
+                    <option value="1" {% if selected_month == 1 %}selected{% endif %}>Janvier</option>
+                    <option value="2" {% if selected_month == 2 %}selected{% endif %}>Février</option>
+                    <option value="3" {% if selected_month == 3 %}selected{% endif %}>Mars</option>
+                    <option value="4" {% if selected_month == 4 %}selected{% endif %}>Avril</option>
+                    <option value="5" {% if selected_month == 5 %}selected{% endif %}>Mai</option>
+                    <option value="6" {% if selected_month == 6 %}selected{% endif %}>Juin</option>
+                    <option value="7" {% if selected_month == 7 %}selected{% endif %}>Juillet</option>
+                    <option value="8" {% if selected_month == 8 %}selected{% endif %}>Août</option>
+                    <option value="9" {% if selected_month == 9 %}selected{% endif %}>Septembre</option>
+                    <option value="10" {% if selected_month == 10 %}selected{% endif %}>Octobre</option>
+                    <option value="11" {% if selected_month == 11 %}selected{% endif %}>Novembre</option>
+                    <option value="12" {% if selected_month == 12 %}selected{% endif %}>Décembre</option>
+                </select>
+
+                {% if selected_month %}
+                <a href="/export_monthly_pdf?month={{ selected_month }}" class="btn btn-modern">
+                    📄 PDF du mois
+                </a>
+                {% else %}
+                <button class="btn btn-secondary" disabled>
+                    📄 Choisir un mois
+                </button>
+                {% endif %}
+            </form>
+        </div>
+
+        {% if selected_month %}
+        <!-- KPI DU MOIS -->
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="main-card kpi-card p-4 text-center">
+                    <h6>Total du mois</h6>
+                    <h2 class="text-primary">{{ month_total }}</h2>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="main-card kpi-card p-4 text-center">
+                    <h6>Résolues</h6>
+                    <h2 class="text-success">{{ month_solved }}</h2>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="main-card kpi-card p-4 text-center">
+                    <h6>Urgentes</h6>
+                    <h2 class="text-danger">{{ month_urgent }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLE DETAILS -->
+        <div class="table-responsive mt-4">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Patient</th>
+                        <th>Service</th>
+                        <th>Priorité</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for claim in monthly_claims %}
+                    <tr class="table-row-animated">
+                        <td>{{ claim.patient_name }}</td>
+                        <td>{{ claim.service }}</td>
+                        <td>{{ claim.priority }}</td>
+                        <td>{{ claim.created_at.strftime('%d/%m/%Y') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            Aucune donnée pour ce mois
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info mt-4 rounded-4">
+            📅 Sélectionnez un mois pour afficher le rapport détaillé et activer le PDF premium mensuel.
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- LIVE URGENT CLAIMS -->
+    <div class="main-card mt-4 p-4 border-start border-danger border-5">
+        <h5 class="fw-bold text-danger mb-3">🚨 Alertes urgentes en direct</h5>
+
+        <div id="liveUrgentClaims">
+            {% for claim in urgent_claims %}
+            <div class="alert alert-danger py-3 mb-3 shadow-sm rounded-4">
+                <strong>{{ claim.patient_name }}</strong><br>
+                🏥 {{ claim.service }}<br>
+                🕒 {{ claim.created_at }}
+            </div>
+            {% else %}
+            <div class="alert alert-success rounded-4">
+                ✅ Aucune alerte urgente pour le moment
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<!-- CHART JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('claimsChart').getContext('2d');
+
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ chart_labels|tojson }},
+        datasets: [{
+            label: 'Réclamations / jour',
+            data: {{ chart_values|tojson }},
+            borderWidth: 1,
+            borderRadius: 12
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: {
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// 🔄 Auto refresh intelligent
+setInterval(() => {
+    window.location.reload();
+}, 5000);
+</script>
+
+{% endblock %}
