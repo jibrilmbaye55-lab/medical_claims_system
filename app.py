@@ -270,6 +270,14 @@ def claims_list():
     )
     return render_template("claims_list.html", claims=claims)
 
+# ==============================
+# DETAIL RECLAMATION
+# ==============================
+@app.route("/claim/<int:id>")
+@login_required
+def claim_details(id):
+    claim = Claim.query.get_or_404(id)
+    return render_template("claim_details.html", claim=claim)
 
 # ==============================
 # ARCHIVES

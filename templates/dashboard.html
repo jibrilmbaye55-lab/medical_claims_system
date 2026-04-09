@@ -13,15 +13,9 @@
         </div>
 
         <div class="d-flex gap-3 flex-wrap">
-            <a href="/claim/new" class="btn btn-modern">
-                ➕ Nouvelle réclamation
-            </a>
-            <a href="/claims" class="btn btn-dark rounded-4 px-4">
-                📋 Voir toutes
-            </a>
-            <a href="/claims/archive" class="btn btn-outline-secondary rounded-4 px-4">
-                🗂 Archives
-            </a>
+            <a href="/claim/new" class="btn btn-modern">➕ Nouvelle réclamation</a>
+            <a href="/claims" class="btn btn-dark rounded-4 px-4">📋 Voir toutes</a>
+            <a href="/claims/archive" class="btn btn-outline-secondary rounded-4 px-4">🗂 Archives</a>
         </div>
     </div>
 
@@ -52,7 +46,7 @@
         </div>
     </div>
 
-    <!-- GRAPHIQUE RECLAMATIONS -->
+    <!-- GRAPHIQUE -->
     <div class="card border-0 shadow-sm rounded-4 mt-4 mb-4">
         <div class="card-body">
             <h5 class="fw-bold mb-4">📈 Taux de traitement des réclamations</h5>
@@ -62,7 +56,6 @@
 
     <!-- ANALYSE PREMIUM -->
     <div class="row g-4 mb-5">
-
         <div class="col-md-3">
             <div class="card border-0 shadow-sm rounded-4 text-center p-4 h-100">
                 <div class="fs-2 mb-2">🚨</div>
@@ -108,7 +101,6 @@
                 <h6 class="fw-bold text-info">24h</h6>
             </div>
         </div>
-
     </div>
 
     <!-- DERNIERES RECLAMATIONS -->
@@ -123,6 +115,7 @@
                         <tr>
                             <th>Patient</th>
                             <th>Sujet</th>
+                            <th>Description</th>
                             <th>Priorité</th>
                             <th>Statut</th>
                             <th>Date</th>
@@ -133,7 +126,19 @@
                         {% for claim in claims %}
                         <tr>
                             <td>{{ claim.patient_name }}</td>
-                            <td>{{ claim.subject }}</td>
+
+                            <!-- SUJET TRONQUE -->
+                            <td style="max-width:220px;">
+                                {{ claim.subject[:40] }}{% if claim.subject|length > 40 %}...{% endif %}
+                            </td>
+
+                            <!-- DESCRIPTION TRONQUEE -->
+                            <td style="max-width:280px;">
+                                <small class="text-muted">
+                                    {{ claim.description[:60] }}{% if claim.description|length > 60 %}...{% endif %}
+                                </small>
+                            </td>
+
                             <td>
                                 {% if claim.priority == "Urgent" %}
                                     <span class="badge bg-danger">Urgent</span>
@@ -141,6 +146,7 @@
                                     <span class="badge bg-info text-dark">{{ claim.priority }}</span>
                                 {% endif %}
                             </td>
+
                             <td>
                                 {% if claim.status == "En attente" %}
                                     <span class="badge bg-warning text-dark">En attente</span>
@@ -148,8 +154,15 @@
                                     <span class="badge bg-success">Résolu</span>
                                 {% endif %}
                             </td>
+
                             <td>{{ claim.created_at.strftime("%d/%m/%Y") }}</td>
-                            <td class="text-end">
+
+                            <td class="text-end d-flex gap-2 justify-content-end flex-wrap">
+                                <a href="{{ url_for('claim_details', id=claim.id) }}"
+                                   class="btn btn-sm btn-primary rounded-3">
+                                    👁 Voir
+                                </a>
+
                                 {% if claim.status == "En attente" %}
                                 <a href="{{ url_for('resolve_claim', id=claim.id) }}"
                                    class="btn btn-sm btn-success rounded-3">
@@ -182,17 +195,6 @@
         </div>
     </div>
 
-    <!-- INFO SECTION -->
-    <div class="mt-5 p-4 rounded-4"
-         style="background: linear-gradient(135deg, rgba(37,99,235,.08), rgba(14,165,233,.08));">
-        <h5 class="fw-bold mb-3">🏥 Suivi institutionnel</h5>
-        <p class="mb-0 text-muted">
-            Ce tableau de bord permet au département médical du COUD
-            de suivre en temps réel les réclamations des étudiants,
-            l’état de traitement et le niveau de résolution du laboratoire.
-        </p>
-    </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -217,9 +219,7 @@ document.addEventListener("DOMContentLoaded", function () {
             options: {
                 responsive: true,
                 plugins: {
-                    legend: {
-                        position: "bottom"
-                    }
+                    legend: { position: "bottom" }
                 }
             }
         });

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="main-card p-5">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1">🧾 Détail de la réclamation</h2>
+            <p class="text-muted mb-0">
+                Consultation complète du dossier patient
+            </p>
+        </div>
+
+        <a href="{{ url_for('claims_list') }}" class="btn btn-dark rounded-4 px-4">
+            ⬅ Retour
+        </a>
+    </div>
+
+    <!-- INFOS -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <p><strong>👤 Patient :</strong> {{ claim.patient_name }}</p>
+                    <p><strong>📞 Téléphone :</strong> {{ claim.phone }}</p>
+                    <p><strong>🏷 Catégorie :</strong> {{ claim.category }}</p>
+                </div>
+
+                <div class="col-md-6">
+                    <p><strong>🏥 Service :</strong> {{ claim.service }}</p>
+                    <p><strong>⚡ Priorité :</strong> {{ claim.priority }}</p>
+                    <p><strong>📅 Date :</strong> {{ claim.created_at.strftime("%d/%m/%Y à %H:%M") }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUJET -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body">
+            <h5 class="fw-bold mb-3">📝 Sujet</h5>
+            <div class="p-3 rounded-4 bg-light">
+                {{ claim.subject }}
+            </div>
+        </div>
+    </div>
+
+    <!-- DESCRIPTION LONGUE -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body">
+            <h5 class="fw-bold mb-3">📄 Description complète</h5>
+            <div class="p-4 rounded-4 bg-light"
+                 style="white-space: pre-wrap; line-height: 1.8;">
+                {{ claim.description }}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
