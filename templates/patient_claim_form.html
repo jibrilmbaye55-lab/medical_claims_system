@@ -2,10 +2,11 @@
 {% block content %}
 
 <style>
-/* ===== PAGE ===== */
-body {
+/* ===== PAGE WRAPPER ===== */
+.patient-form-page {
     overflow-x: hidden;
     padding-top: 100px;
+    min-height: 100%;
 }
 
 /* ===== HEADER OFFICIEL ===== */
@@ -222,98 +223,88 @@ body {
 }
 </style>
 
-<!-- ===== HEADER ===== -->
-<div class="official-header">
-    <div class="container-fluid d-flex justify-content-between align-items-center px-4 py-3">
-        <div class="d-flex align-items-center gap-3">
-            <div class="qr-pulse-icon">📋</div>
-            <div>
-                <div class="header-title">COUD Medical Reclamations</div>
-                <div class="header-subtitle">
-                    Centre médical • Laboratoire • Réclamations intelligentes
+<div class="patient-form-page">
+
+    <!-- ===== HEADER ===== -->
+    <div class="official-header">
+        <div class="container-fluid d-flex justify-content-between align-items-center px-4 py-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="qr-pulse-icon">📋</div>
+                <div>
+                    <div class="header-title">COUD Medical Reclamations</div>
+                    <div class="header-subtitle">
+                        Centre médical • Laboratoire • Réclamations intelligentes
+                    </div>
                 </div>
             </div>
+            <div class="header-date" id="liveDate"></div>
         </div>
-        <div class="header-date" id="liveDate"></div>
-    </div>
-    <div class="ecg-line"></div>
-</div>
-
-<!-- ===== FOND ANIMÉ ===== -->
-<div class="animated-bg">
-    <div class="bg-grid"></div>
-    <div class="bg-orb one"></div>
-    <div class="bg-orb two"></div>
-    <div class="bg-orb three"></div>
-</div>
-
-<!-- ===== TOAST ===== -->
-<div id="successToast" class="success-toast">
-    ✅ Réclamation prête à être envoyée
-</div>
-
-<!-- ===== FORMULAIRE ===== -->
-<div class="main-card p-5 mx-auto" style="max-width: 1100px;">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-4">
-        <div class="brand-logos">
-            <img src="{{ url_for('static', filename='assets/logo_coud.png') }}" alt="Logo COUD" class="logo-coud">
-            <div class="logo-divider"></div>
-            <img src="{{ url_for('static', filename='assets/logo_labo.png') }}" alt="Logo Laboratoire" class="logo-labo">
-        </div>
-
-        <div class="text-end">
-            <span class="badge bg-primary fs-6 px-4 py-3 rounded-pill shadow-sm">
-                QR Access Enabled
-            </span>
-        </div>
+        <div class="ecg-line"></div>
     </div>
 
-    <div class="mb-4">
-        <h1 class="fw-bold mb-2">Formulaire de Réclamation Patient</h1>
-        <p class="text-muted mb-0">
-            Soumettez votre réclamation en quelques secondes après le scan du QR code.
-        </p>
+    <!-- ===== FOND ===== -->
+    <div class="animated-bg">
+        <div class="bg-grid"></div>
+        <div class="bg-orb one"></div>
+        <div class="bg-orb two"></div>
+        <div class="bg-orb three"></div>
     </div>
 
-    <form method="POST" class="row g-4" id="claimForm">
-        <div class="col-md-6">
-            <label class="fw-semibold mb-2">Nom complet</label>
-            <input name="patient_name" class="form-control" placeholder="Ex: Djibril Mbaye" required>
+    <!-- ===== TOAST ===== -->
+    <div id="successToast" class="success-toast">
+        ✅ Réclamation prête à être envoyée
+    </div>
+
+    <!-- ===== FORM ===== -->
+    <div class="main-card p-5 mx-auto" style="max-width: 1100px;">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-4">
+            <div class="brand-logos">
+                <img src="{{ url_for('static', filename='assets/logo_coud.png') }}" class="logo-coud">
+                <div class="logo-divider"></div>
+                <img src="{{ url_for('static', filename='assets/logo_labo.png') }}" class="logo-labo">
+            </div>
         </div>
 
-        <div class="col-md-6">
-            <label class="fw-semibold mb-2">Catégorie</label>
-            <select name="category" class="form-select" required>
-                <option>Etudiant</option>
-                <option>Personnel COUD</option>
-                <option>Externe</option>
-            </select>
-        </div>
+        <h1 class="fw-bold mb-4">Formulaire de Réclamation Patient</h1>
 
-        <div class="col-md-6">
-            <label class="fw-semibold mb-2">Téléphone</label>
-            <input name="phone" type="tel" class="form-control" placeholder="Ex: 77 123 45 67" required>
-            <small class="text-muted">
-                Ce numéro permettra au service médical de vous contacter rapidement.
-            </small>
-        </div>
+        <form method="POST" class="row g-4" id="claimForm">
+            <div class="col-md-6">
+                <label class="fw-semibold mb-2">Nom complet</label>
+                <input name="patient_name" class="form-control" required>
+            </div>
 
-        <div class="col-md-6">
-            <label class="fw-semibold mb-2">Service concerné</label>
-            <input name="subject" class="form-control" placeholder="Ex: Laboratoire" required>
-        </div>
+            <div class="col-md-6">
+                <label class="fw-semibold mb-2">Catégorie</label>
+                <select name="category" class="form-select" required>
+                    <option>Etudiant</option>
+                    <option>Personnel COUD</option>
+                    <option>Externe</option>
+                </select>
+            </div>
 
-        <div class="col-12">
-            <label class="fw-semibold mb-2">Description détaillée</label>
-            <textarea name="description" class="form-control" rows="6" placeholder="Décrivez votre problème ici..." required></textarea>
-        </div>
+            <div class="col-md-6">
+                <label class="fw-semibold mb-2">Téléphone</label>
+                <input name="phone" type="tel" class="form-control" required>
+            </div>
 
-        <div class="col-12 d-grid">
-            <button class="btn btn-modern text-white btn-lg">
-                🚀 Soumettre la réclamation
-            </button>
-        </div>
-    </form>
+            <div class="col-md-6">
+                <label class="fw-semibold mb-2">Service concerné</label>
+                <input name="subject" class="form-control" required>
+            </div>
+
+            <div class="col-12">
+                <label class="fw-semibold mb-2">Description détaillée</label>
+                <textarea name="description" class="form-control" rows="6" required></textarea>
+            </div>
+
+            <div class="col-12 d-grid">
+                <button class="btn btn-modern text-white btn-lg">
+                    🚀 Soumettre la réclamation
+                </button>
+            </div>
+        </form>
+    </div>
+
 </div>
 
 <script>

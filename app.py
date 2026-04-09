@@ -1,4 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_file
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    send_file,
+    make_response,
+    flash,
+)
 from config import Config
 from models.db import db
 from models.user_model import User
@@ -6,6 +16,7 @@ from models.claim_model import Claim
 from datetime import datetime, timedelta
 from sqlalchemy import extract
 from utils.helpers import assign_service, detect_priority
+from functools import wraps
 import qrcode
 from io import BytesIO
 
@@ -32,6 +43,40 @@ app.secret_key = "super-secret-key"
 
 db.init_app(app)
 
+
+# ==============================
+# SECURITE AUTHENTIFICATION
+# ==============================
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Veuillez vous connecter pour accéder au système.", "warning")
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def role_required(required_role):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if "user_id" not in session:
+                flash("Connexion requise.", "warning")
+                return redirect(url_for("login"))
+
+            if session.get("role") != required_role:
+                flash("Accès non autorisé.", "danger")
+                return redirect(url_for("dashboard"))
+
+            return f(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator
+
+
 # ==============================
 # INITIALISATION DB + ADMIN
 # ==============================
@@ -51,6 +96,16 @@ with app.app_context():
 
 
 # ==============================
+# SIGNATURE SYSTEME
+# ==============================
+@app.context_processor
+def inject_system_signature():
+    return {
+        "system_signature": "COUD Medical Claims System • Powered by NISME HOME"
+    }
+
+
+# ==============================
 # ROUTE ACCUEIL
 # ==============================
 @app.route("/")
@@ -59,27 +114,60 @@ def home():
 
 
 # ==============================
-# LOGIN ADMIN
+# LOGIN ADMIN + SOUVIENS TOI DE MOI
 # ==============================
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    remembered_email = request.cookies.get("remember_email", "")
+
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
+        remember_me = request.form.get("remember_me")
 
         user = User.query.filter_by(email=email).first()
 
         if user and user.check_password(password):
+            session["user_id"] = user.id
             session["user"] = user.full_name
-            return redirect(url_for("dashboard"))
+            session["role"] = user.role
 
-    return render_template("login.html")
+            response = make_response(redirect(url_for("dashboard")))
+
+            if remember_me:
+                response.set_cookie(
+                    "remember_email",
+                    email,
+                    max_age=60 * 60 * 24 * 30,
+                )
+            else:
+                response.delete_cookie("remember_email")
+
+            flash("Connexion réussie.", "success")
+            return response
+
+        flash("Email ou mot de passe incorrect.", "danger")
+
+    return render_template("login.html", remembered_email=remembered_email)
+
+
+# ==============================
+# LOGOUT
+# ==============================
+@app.route("/logout")
+@login_required
+def logout():
+    session.clear()
+    flash("Déconnexion réussie.", "success")
+    return redirect(url_for("login"))
 
 
 # ==============================
 # DASHBOARD ADMIN
 # ==============================
 @app.route("/dashboard")
+@login_required
+@role_required("admin")
 def dashboard():
     total = Claim.query.filter_by(is_archived=False).count()
     pending = Claim.query.filter_by(
@@ -109,6 +197,7 @@ def dashboard():
 # CREATION RECLAMATION INTERNE
 # ==============================
 @app.route("/claim/new", methods=["GET", "POST"])
+@login_required
 def create_claim():
     if request.method == "POST":
         subject = request.form["subject"]
@@ -172,6 +261,7 @@ def patient_claim_form():
 # LISTE RECLAMATIONS
 # ==============================
 @app.route("/claims")
+@login_required
 def claims_list():
     claims = (
         Claim.query.filter_by(is_archived=False)
@@ -185,6 +275,7 @@ def claims_list():
 # ARCHIVES
 # ==============================
 @app.route("/claims/archive")
+@login_required
 def archived_claims():
     claims = (
         Claim.query.filter_by(is_archived=True)
@@ -198,6 +289,7 @@ def archived_claims():
 # RESTAURATION ARCHIVE
 # ==============================
 @app.route("/claim/<int:id>/restore")
+@login_required
 def restore_claim(id):
     claim = Claim.query.get_or_404(id)
 
@@ -214,6 +306,8 @@ def restore_claim(id):
 # ESCALATIONS > 24H
 # ==============================
 @app.route("/admin/escalations")
+@login_required
+@role_required("admin")
 def escalations():
     old_claims = Claim.query.filter_by(
         status="En attente", is_archived=False
@@ -232,6 +326,7 @@ def escalations():
 # RESOLUTION + ARCHIVAGE
 # ==============================
 @app.route("/claim/<int:id>/resolve")
+@login_required
 def resolve_claim(id):
     claim = Claim.query.get_or_404(id)
     claim.status = "Résolu"
@@ -246,6 +341,8 @@ def resolve_claim(id):
 # DASHBOARD REPORTS
 # ==============================
 @app.route("/admin/reports")
+@login_required
+@role_required("admin")
 def admin_reports():
     total = Claim.query.count()
     pending = Claim.query.filter_by(status="En attente").count()
@@ -328,6 +425,8 @@ def admin_reports():
 # EXPORT PDF GLOBAL SIMPLE
 # ==============================
 @app.route("/export_pdf")
+@login_required
+@role_required("admin")
 def export_pdf():
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=A4)
@@ -359,6 +458,8 @@ def export_pdf():
 # EXPORT PDF PREMIUM DIRECTION V9
 # ==============================
 @app.route("/admin/export")
+@login_required
+@role_required("admin")
 def export_report():
     claims = Claim.query.order_by(Claim.created_at.desc()).all()
 
@@ -376,27 +477,15 @@ def export_report():
     story = []
 
     try:
-        story.append(
-            Image(
-                "static/assets/logo_coud.png",
-                width=2.5 * cm,
-                height=2.5 * cm,
-            )
-        )
+        story.append(Image("static/assets/logo_coud.png", width=2.5 * cm, height=2.5 * cm))
         story.append(Spacer(1, 0.2 * cm))
-    except:
+    except Exception:
         pass
 
     try:
-        story.append(
-            Image(
-                "static/assets/logo_labo.png",
-                width=2.2 * cm,
-                height=2.2 * cm,
-            )
-        )
+        story.append(Image("static/assets/logo_labo.png", width=2.2 * cm, height=2.2 * cm))
         story.append(Spacer(1, 0.3 * cm))
-    except:
+    except Exception:
         pass
 
     story.append(
@@ -423,11 +512,7 @@ def export_report():
     for c in claims:
         service_stats[c.service] = service_stats.get(c.service, 0) + 1
 
-    top_service = (
-        max(service_stats, key=service_stats.get)
-        if service_stats
-        else "N/A"
-    )
+    top_service = max(service_stats, key=service_stats.get) if service_stats else "N/A"
 
     story.append(Paragraph(f"<b>Total :</b> {total}", styles["Normal"]))
     story.append(Paragraph(f"<b>En attente :</b> {pending}", styles["Normal"]))
@@ -448,21 +533,11 @@ def export_report():
     stats_table.setStyle(
         TableStyle(
             [
-                (
-                    "BACKGROUND",
-                    (0, 0),
-                    (-1, 0),
-                    colors.HexColor("#1d4ed8"),
-                ),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1d4ed8")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                (
-                    "ROWBACKGROUNDS",
-                    (0, 1),
-                    (-1, -1),
-                    [colors.whitesmoke, colors.lightgrey],
-                ),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.whitesmoke, colors.lightgrey]),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ]
         )
@@ -470,13 +545,9 @@ def export_report():
 
     story.append(stats_table)
     story.append(Spacer(1, 1 * cm))
-    story.append(
-        Paragraph("<b>Signature Chef Médical</b>", styles["Normal"])
-    )
+    story.append(Paragraph("<b>Signature Chef Médical</b>", styles["Normal"]))
     story.append(Spacer(1, 1.2 * cm))
-    story.append(
-        Paragraph("_______________________________", styles["Normal"])
-    )
+    story.append(Paragraph("_______________________________", styles["Normal"]))
 
     doc.build(story)
 
@@ -493,6 +564,8 @@ def export_report():
 # EXPORT PDF MENSUEL PREMIUM
 # ==============================
 @app.route("/export_monthly_pdf")
+@login_required
+@role_required("admin")
 def export_monthly_pdf():
     selected_month = request.args.get("month", type=int)
 
@@ -520,14 +593,8 @@ def export_monthly_pdf():
     story = []
 
     try:
-        story.append(
-            Image(
-                "static/assets/logo_coud.png",
-                width=2.8 * cm,
-                height=2.8 * cm,
-            )
-        )
-    except:
+        story.append(Image("static/assets/logo_coud.png", width=2.8 * cm, height=2.8 * cm))
+    except Exception:
         pass
 
     story.append(
@@ -564,22 +631,12 @@ def export_monthly_pdf():
     table.setStyle(
         TableStyle(
             [
-                (
-                    "BACKGROUND",
-                    (0, 0),
-                    (-1, 0),
-                    colors.HexColor("#2563eb"),
-                ),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2563eb")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                 ("FONTSIZE", (0, 0), (-1, -1), 10),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                (
-                    "ROWBACKGROUNDS",
-                    (0, 1),
-                    (-1, -1),
-                    [colors.whitesmoke, colors.lightgrey],
-                ),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.whitesmoke, colors.lightgrey]),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ]
         )
@@ -619,6 +676,14 @@ def generate_qr():
     buffer.seek(0)
 
     return send_file(buffer, mimetype="image/png")
+
+
+# ==============================
+# KEEP ALIVE RENDER / UPTIMEROBOT
+# ==============================
+@app.route("/ping")
+def ping():
+    return "COUD Medical Claims System is alive ✅", 200
 
 
 # ==============================
