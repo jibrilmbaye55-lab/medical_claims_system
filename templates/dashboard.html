@@ -27,7 +27,6 @@
 
     <!-- KPI CARDS -->
     <div class="row g-4 mb-5">
-
         <div class="col-md-4">
             <div class="card border-0 main-card kpi-card p-4 text-center h-100 shadow-sm">
                 <div class="fs-1 mb-3">📁</div>
@@ -51,15 +50,65 @@
                 <h2 class="fw-bold text-success">{{ solved }}</h2>
             </div>
         </div>
-
     </div>
 
     <!-- GRAPHIQUE RECLAMATIONS -->
-    <div class="card border-0 shadow-sm rounded-4 mt-4 mb-5">
+    <div class="card border-0 shadow-sm rounded-4 mt-4 mb-4">
         <div class="card-body">
             <h5 class="fw-bold mb-4">📈 Taux de traitement des réclamations</h5>
             <canvas id="claimsChart" height="100"></canvas>
         </div>
+    </div>
+
+    <!-- ANALYSE PREMIUM -->
+    <div class="row g-4 mb-5">
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4 h-100">
+                <div class="fs-2 mb-2">🚨</div>
+                <h6 class="text-muted">Urgences récentes</h6>
+                <h3 class="fw-bold text-danger">
+                    {{ claims | selectattr("priority", "equalto", "Urgent") | list | length }}
+                </h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4 h-100">
+                <div class="fs-2 mb-2">📈</div>
+                <h6 class="text-muted">Taux résolution</h6>
+                <h3 class="fw-bold text-success">
+                    {% if total > 0 %}
+                        {{ ((solved / total) * 100) | round(1) }}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4 h-100">
+                <div class="fs-2 mb-2">🏥</div>
+                <h6 class="text-muted">Service dominant</h6>
+                <h6 class="fw-bold text-primary">
+                    {% if claims %}
+                        {{ claims[0].service }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </h6>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4 h-100">
+                <div class="fs-2 mb-2">⏱</div>
+                <h6 class="text-muted">Temps moyen</h6>
+                <h6 class="fw-bold text-info">24h</h6>
+            </div>
+        </div>
+
     </div>
 
     <!-- DERNIERES RECLAMATIONS -->
@@ -101,7 +150,6 @@
                             </td>
                             <td>{{ claim.created_at.strftime("%d/%m/%Y") }}</td>
                             <td class="text-end">
-
                                 {% if claim.status == "En attente" %}
                                 <a href="{{ url_for('resolve_claim', id=claim.id) }}"
                                    class="btn btn-sm btn-success rounded-3">
@@ -120,7 +168,6 @@
                                     </button>
                                 </form>
                                 {% endif %}
-
                             </td>
                         </tr>
                         {% endfor %}
