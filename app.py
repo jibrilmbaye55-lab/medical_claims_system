@@ -301,6 +301,27 @@ def restore_claim(id):
 
     return redirect(url_for("archived_claims"))
 
+# ==============================
+# SUPPRESSION DEFINITIVE ARCHIVE
+# ==============================
+@app.route("/claim/<int:id>/delete", methods=["POST"])
+@login_required
+@role_required("admin")
+def delete_claim(id):
+    claim = Claim.query.get_or_404(id)
+
+    if claim.status != "Résolu" or not claim.is_archived:
+        flash(
+            "Seules les réclamations résolues et archivées peuvent être supprimées.",
+            "danger",
+        )
+        return redirect(url_for("archived_claims"))
+
+    db.session.delete(claim)
+    db.session.commit()
+
+    flash("Réclamation supprimée définitivement avec succès.", "success")
+    return redirect(url_for("archived_claims"))
 
 # ==============================
 # ESCALATIONS > 24H

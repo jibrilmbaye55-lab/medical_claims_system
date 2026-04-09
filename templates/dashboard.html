@@ -19,14 +19,17 @@
             <a href="/claims" class="btn btn-dark rounded-4 px-4">
                 📋 Voir toutes
             </a>
+            <a href="/claims/archive" class="btn btn-outline-secondary rounded-4 px-4">
+                🗂 Archives
+            </a>
         </div>
     </div>
 
     <!-- KPI CARDS -->
-    <div class="row g-4">
+    <div class="row g-4 mb-5">
 
         <div class="col-md-4">
-            <div class="card border-0 main-card kpi-card p-4 text-center h-100">
+            <div class="card border-0 main-card kpi-card p-4 text-center h-100 shadow-sm">
                 <div class="fs-1 mb-3">📁</div>
                 <h6 class="text-muted">Total Réclamations</h6>
                 <h2 class="fw-bold text-primary">{{ total }}</h2>
@@ -34,7 +37,7 @@
         </div>
 
         <div class="col-md-4">
-            <div class="card border-0 main-card kpi-card p-4 text-center h-100">
+            <div class="card border-0 main-card kpi-card p-4 text-center h-100 shadow-sm">
                 <div class="fs-1 mb-3">⏳</div>
                 <h6 class="text-muted">En attente</h6>
                 <h2 class="fw-bold text-warning">{{ pending }}</h2>
@@ -42,13 +45,94 @@
         </div>
 
         <div class="col-md-4">
-            <div class="card border-0 main-card kpi-card p-4 text-center h-100">
+            <div class="card border-0 main-card kpi-card p-4 text-center h-100 shadow-sm">
                 <div class="fs-1 mb-3">✅</div>
                 <h6 class="text-muted">Réclamations résolues</h6>
                 <h2 class="fw-bold text-success">{{ solved }}</h2>
             </div>
         </div>
 
+    </div>
+
+    <!-- GRAPHIQUE RECLAMATIONS -->
+    <div class="card border-0 shadow-sm rounded-4 mt-4 mb-5">
+        <div class="card-body">
+            <h5 class="fw-bold mb-4">📈 Taux de traitement des réclamations</h5>
+            <canvas id="claimsChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <!-- DERNIERES RECLAMATIONS -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body">
+            <h5 class="fw-bold mb-4">🕒 5 dernières réclamations</h5>
+
+            {% if claims %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Sujet</th>
+                            <th>Priorité</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for claim in claims %}
+                        <tr>
+                            <td>{{ claim.patient_name }}</td>
+                            <td>{{ claim.subject }}</td>
+                            <td>
+                                {% if claim.priority == "Urgent" %}
+                                    <span class="badge bg-danger">Urgent</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">{{ claim.priority }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if claim.status == "En attente" %}
+                                    <span class="badge bg-warning text-dark">En attente</span>
+                                {% else %}
+                                    <span class="badge bg-success">Résolu</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ claim.created_at.strftime("%d/%m/%Y") }}</td>
+                            <td class="text-end">
+
+                                {% if claim.status == "En attente" %}
+                                <a href="{{ url_for('resolve_claim', id=claim.id) }}"
+                                   class="btn btn-sm btn-success rounded-3">
+                                    ✅ Résoudre
+                                </a>
+                                {% endif %}
+
+                                {% if claim.status == "Résolu" %}
+                                <form method="POST"
+                                      action="{{ url_for('delete_claim', id=claim.id) }}"
+                                      style="display:inline;">
+                                    <button type="submit"
+                                            class="btn btn-sm btn-danger rounded-3"
+                                            onclick="return confirm('Supprimer cette réclamation résolue ?')">
+                                        🗑 Supprimer
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-light border rounded-4">
+                Aucune réclamation récente disponible.
+            </div>
+            {% endif %}
+        </div>
     </div>
 
     <!-- INFO SECTION -->
@@ -63,5 +147,37 @@
     </div>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const ctx = document.getElementById("claimsChart");
+
+    if (ctx) {
+        new Chart(ctx, {
+            type: "doughnut",
+            data: {
+                labels: ["En attente", "Résolues"],
+                datasets: [{
+                    data: [{{ pending }}, {{ solved }}],
+                    backgroundColor: [
+                        "rgba(245, 158, 11, 0.8)",
+                        "rgba(34, 197, 94, 0.8)"
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
 
 {% endblock %}
